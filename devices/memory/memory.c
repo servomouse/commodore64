@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "memory.h"
+#include "utils.h"
 
 static uint32_t get_file_size(FILE *file) {
     uint32_t init_location = ftell(file);
@@ -36,4 +37,16 @@ memory_t *memory_init(uint32_t memory_size, uint8_t memory_type) {
     memory->size = memory_size;
     memory->type = memory_type;
     return memory;
+}
+
+void memory_store(memory_t *memory, char *filename) {
+    store_data(memory->arr, memory->size, filename);
+}
+
+void memory_restore(memory_t *memory, char *filename) {
+    uint8_t *data = restore_data(filename, &memory->size);
+    for(size_t i=0; i<memory->size; i++) {
+        memory->arr[i] = data[i];
+    }
+    free(data);
 }

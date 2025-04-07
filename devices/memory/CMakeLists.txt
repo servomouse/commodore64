@@ -4,10 +4,10 @@ set(memory_sources
 
 add_library(memory ${memory_sources})
 
-# target_link_libraries(memory
-#     PRIVATE
-#         utils
-# )
+target_link_libraries(memory
+    PRIVATE
+        utils
+)
 
 target_include_directories(memory
     PUBLIC
