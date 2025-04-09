@@ -18,6 +18,8 @@ typedef struct {
     uint32_t(*read_addr)(void);         // Read address from the address bus
     void(*write_addr)(uint32_t);        // Write address to the address bus
     // uint8_t(*get_cs)(uint32_t);         // Get Chip Select by index
-    uint8_t(*get_direction)(void);      // Get R/W state
-    void(*set_direction)(uint8_t);      // Set R/W state
+    uint8_t(*get_direction)(void);      // Get R/W direction
+    void(*set_direction)(uint8_t);      // Set R/W direction
+    uint8_t(*get_state)(void);          // Get BUSY/FREE state
+    void(*set_state)(uint8_t);          // Set BUSY/FREE state
 } bus_master_iface_t;

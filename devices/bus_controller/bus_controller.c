@@ -6,10 +6,14 @@
 #define ADDR_BUS_WIDTH uint16_t
 #define NUM_DEVICES 128
 
+#define BUS_BUSY_FLAG       0
+#define BUS_DIRECTION_FLAG  1
+
 typedef struct {
     DATA_BUS_WIDTH data;
     ADDR_BUS_WIDTH address;
-    uint8_t rw_enable;  // 0: all disable, 1: read enable, 2: write_enable
+    uint8_t state;      // Busy      (bit 0): 0: free, 1: busy
+                        // Direction (bit 1): 0: read, 1: write
 } cpu_bus_t;
 
 typedef struct {
@@ -48,21 +52,43 @@ void bus_set_addr(uint32_t addr) {
     }
 }
 
+static uint8_t bus_get_flag(uint8_t flag) {
+    if((bus.state & flag) == flag) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+static void bus_set_flag(uint8_t flag, uint8_t value) {
+    if(value == 0) {
+        bus.state &= ~(1 << flag);
+    } else {
+        bus.state |= (1 << flag);
+    }
+}
+
+uint8_t bus_get_direction(void) {
+    return bus_get_flag(BUS_DIRECTION_FLAG);
+}
+
+void bus_set_direction(uint8_t new_state) {
+    bus_set_flag(BUS_DIRECTION_FLAG, new_state);
+}
+
 uint8_t bus_get_state(void) {
-    return bus.rw_enable;
+    return bus_get_flag(BUS_BUSY_FLAG);
 }
 
 void bus_set_state(uint8_t new_state) {
-    bus.rw_enable = new_state;
+    bus_set_flag(BUS_BUSY_FLAG, new_state);
 }
 
 uint8_t bus_get_cs(uint32_t idx) {
     return chip_select[idx];
 }
 
-// addr_range is an array: [start_addr, end_addr]
-// Returns the pointer to the device's chip select
-uint8_t *bus_map_device(uint32_t *addr_range, char *device_name) {
+uint8_t bus_map_device(uint32_t *addr_range, char *device_name) {
     uint32_t idx = 0, found = 0;
     for(uint32_t i=0; i<NUM_DEVICES; i++) {
         if(ranges[i].initialized == 0) {
@@ -85,11 +111,11 @@ uint8_t *bus_map_device(uint32_t *addr_range, char *device_name) {
             }
         }
     }
-    if(found) {
-        return &chip_select[idx];
+    if(found == 0) {
+        printf("Error: Failed to map device %s: too many devices", device_name);
+        exit(EXIT_FAILURE);
     }
-    printf("Error: Failed to map device %s: too many devices", device_name);
-    exit(EXIT_FAILURE);
+    return idx;
 }
 
 bus_master_iface_t *bus_get_master_iface(void) {
@@ -98,8 +124,10 @@ bus_master_iface_t *bus_get_master_iface(void) {
         .write_data = bus_set_value,
         .read_addr = bus_get_addr,
         .write_addr = bus_set_addr,
-        .get_direction = bus_get_state,
-        .set_direction = bus_set_state,
+        .get_direction = bus_get_direction,
+        .set_direction = bus_set_direction,
+        .get_state = bus_get_state,
+        .set_state = bus_set_state,
     };
     return &iface;
 }

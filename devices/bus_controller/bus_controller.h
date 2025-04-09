@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "bus_header.h"
+#include "bus_controller_header.h"
 
 
 uint32_t bus_get_value(void);
@@ -16,5 +16,5 @@ bus_device_iface_t *bus_get_device_iface(void);
 uint8_t bus_get_cs(uint32_t idx);
 
 // addr_range is an array: [start_addr, end_addr]
-// Returns the pointer to the device's chip select
-uint8_t *bus_map_device(uint32_t *addr_range, char *device_name);
+// Returns an index in the CS array, assigned to the device
+uint8_t bus_map_device(uint32_t *addr_range, char *device_name);
